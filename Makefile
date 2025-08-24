@@ -9,7 +9,7 @@ clean:
 	fi
 install: all
 	install -Dm644 $(srcdir)COPYING $(prefix)/share/doc/shutter/COPYING
-	install -Dm644 $(srcdir)README $(prefix)/share/doc/shutter/README
+	install -Dm644 $(srcdir)README.md $(prefix)/share/doc/shutter/README.md
 	install -Dm755 $(srcdir)bin/shutter $(prefix)/bin/shutter
 	cp -r $(srcdir)share/ $(prefix)/
 

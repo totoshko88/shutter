@@ -2,8 +2,15 @@ use utf8;
 use strict;
 use warnings;
 use Net::DBus;
-use Net::DBus::Reactor; # kept for compatibility; we will prefer Glib::MainLoop below
-use Net::DBus::GLib; # hook D-Bus into GLib main loop for GTK apps
+use Net::DBus::Reactor; # fallback main loop if GLib integration is unavailable
+# Try to integrate Net::DBus with GLib main loop, but don't hard-require it
+my $HAS_DBUS_GLIB = 0;
+BEGIN {
+	$HAS_DBUS_GLIB = eval {
+		require Net::DBus::GLib; Net::DBus::GLib->import(); 1
+	} ? 1 : 0;
+	warn "[wayland] Net::DBus::GLib not available; using Net::DBus::Reactor fallback\n" if !$HAS_DBUS_GLIB && $ENV{SHUTTER_DEBUG};
+}
 # Net::DBus::Annotation helpers are not available everywhere; avoid and pass plain scalars.
 use Time::HiRes qw(usleep);
 
@@ -16,7 +23,7 @@ sub xdg_portal {
 
 	# We'll use a nested Glib::MainLoop to wait for the portal response,
 	# which keeps the Gtk main context responsive.
-	my $loop;
+	my $loop; # Glib::MainLoop (when $HAS_DBUS_GLIB)
 	my $bus = Net::DBus->find;
 	my $me = $bus->get_unique_name;
 	$me =~ s/\./_/g;
@@ -39,10 +46,14 @@ sub xdg_portal {
 
 		my $num;
 		my $output;
-		my $cb = sub {
-			($num, $output) = @_;
-			$loop->quit if $loop;
-		};
+			my $cb = sub {
+				($num, $output) = @_;
+				if ($HAS_DBUS_GLIB) {
+					$loop->quit if $loop;
+				} else {
+					Net::DBus::Reactor->main->shutdown;
+				}
+			};
 
 		my $token = 'shutter' . rand;
 		$token =~ s/\.//g;
@@ -77,20 +88,34 @@ sub xdg_portal {
 			$timeout_ms = defined $ENV{SHUTTER_PORTAL_TIMEOUT_MS} && $ENV{SHUTTER_PORTAL_TIMEOUT_MS} =~ /^(\d+)$/ ? $1 : 30000;
 		}
 		my $timed_out = 0;
-		my $timeout_id;
-		if ($timeout_ms > 0) {
-			$timeout_id = Glib::Timeout->add($timeout_ms, sub {
-				$timed_out = 1;
-				$last_err = 'XDG portal response timeout';
-				warn "[wayland] $last_err (after ${timeout_ms}ms)\n" if $ENV{SHUTTER_DEBUG};
-				$loop->quit if $loop;
-				return 0; # one-shot
-			});
+		if ($HAS_DBUS_GLIB) {
+			my $timeout_id;
+			if ($timeout_ms > 0) {
+				$timeout_id = Glib::Timeout->add($timeout_ms, sub {
+					$timed_out = 1;
+					$last_err = 'XDG portal response timeout';
+					warn "[wayland] $last_err (after ${timeout_ms}ms)\n" if $ENV{SHUTTER_DEBUG};
+					$loop->quit if $loop;
+					return 0; # one-shot
+				});
+			}
+			$loop = Glib::MainLoop->new(undef, 0);
+			$loop->run;
+			# Best effort to clear timeout if response arrived in time
+			Glib::Source->remove($timeout_id) if defined $timeout_id && !$timed_out;
+		} else {
+			my $reactor = Net::DBus::Reactor->main;
+			if ($timeout_ms > 0) {
+				$reactor->add_timeout($timeout_ms, sub {
+					$timed_out = 1;
+					$last_err = 'XDG portal response timeout';
+					warn "[wayland] $last_err (after ${timeout_ms}ms)\n" if $ENV{SHUTTER_DEBUG};
+					$reactor->shutdown;
+					return 0; # one-shot
+				});
+			}
+			$reactor->run;
 		}
-		$loop = Glib::MainLoop->new(undef, 0);
-		$loop->run;
-		# Best effort to clear timeout if response arrived in time
-		Glib::Source->remove($timeout_id) if defined $timeout_id && !$timed_out;
 		$request->disconnect_from_signal(Response => $conn);
 		if (!defined $num || $num != 0) {
 			# Map portal response codes to Shutter error codes
@@ -112,6 +137,12 @@ sub xdg_portal {
 		my $local_path = eval { $giofile->get_path };
 		warn "[wayland] xdg portal: local path: " . (defined $local_path ? $local_path : '<undef>') . "\n" if $ENV{SHUTTER_DEBUG};
 		if (defined $local_path && length $local_path) {
+			# If file exists but is empty, treat as cancel
+			if (-e $local_path && -s $local_path == 0) {
+				$last_err = 'Portal returned empty file (cancelled)';
+				warn "[wayland] $last_err\n" if $ENV{SHUTTER_DEBUG};
+				return 5;
+			}
 			$pixbuf = Gtk3::Gdk::Pixbuf->new_from_file($local_path);
 			# best-effort cleanup
 			eval { $giofile->delete };
@@ -119,6 +150,11 @@ sub xdg_portal {
 			# Some portals return a document portal URI without a direct local path; load contents instead
 			my ($ok, $data);
 			if (eval { ($ok, $data) = $giofile->load_contents(undef); 1 } && $ok && defined $data) {
+				if (length($data) == 0) {
+					$last_err = 'Portal returned empty contents (cancelled)';
+					warn "[wayland] $last_err\n" if $ENV{SHUTTER_DEBUG};
+					return 5;
+				}
 				my $loader = Gtk3::Gdk::PixbufLoader->new;
 				$loader->write($data);
 				$loader->close;

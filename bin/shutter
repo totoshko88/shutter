@@ -651,12 +651,29 @@ sub STARTUP {
 	$backend_label->set_alignment(0, 0.5);
 	$backend_combo = Gtk3::ComboBoxText->new;
 	$backend_combo->append('auto',    $d->get('Auto (Portal → DE fallbacks)'));
+	$backend_combo->append('spectacle', $d->get('Prefer Spectacle (KDE)'));
 	$backend_combo->append('cosmic',  $d->get('Prefer COSMIC'));
 	$backend_combo->append('portal',  $d->get('Force Portal'));
 
 	# Load saved preference
 	my $saved_pref = eval { $settings_xml->{'general'}->{'wayland_backend_pref'} } // 'auto';
-	$backend_combo->set_active_id($saved_pref =~ /^(cosmic|portal)$/ ? $saved_pref : 'auto');
+
+	# If running on KDE + Wayland and no explicit pref saved, default UI to Spectacle
+	my $ui_default_pref = $saved_pref;
+	if ($ui_default_pref eq 'auto' && !$x11_supported) {
+		my $is_kde = (
+			(defined $ENV{KDE_FULL_SESSION} && $ENV{KDE_FULL_SESSION} =~ /^(1|true)$/i) ||
+			(defined $ENV{XDG_CURRENT_DESKTOP} && $ENV{XDG_CURRENT_DESKTOP} =~ /(KDE|PLASMA)/i) ||
+			(defined $ENV{DESKTOP_SESSION} && $ENV{DESKTOP_SESSION} =~ /(plasma|kde)/i)
+		) ? 1 : 0;
+		if ($is_kde) {
+			eval { require Shutter::Screenshot::KDESpectacle; };
+			if (!$@ && Shutter::Screenshot::KDESpectacle::is_available()) {
+				$ui_default_pref = 'spectacle';
+			}
+		}
+	}
+	$backend_combo->set_active_id($ui_default_pref =~ /^(cosmic|portal|spectacle)$/ ? $ui_default_pref : 'auto');
 
 	$wayland_box->pack_start($backend_label, FALSE, FALSE, 0);
 	$wayland_box->pack_start($backend_combo, FALSE, FALSE, 0);
@@ -4552,13 +4569,28 @@ sub ACTIVATE {
 			$window->move($window->{x}, $window->{y})
 				if (defined $window->{x} && defined $window->{y});
 
-			#if it's shown already, but behind other windows, without hiding it doesn't show
-			$window->hide;
+			# Wayland compositors can block raise-on-activate; prefer present_with_time
+			# and avoid hide/show flicker on Wayland.
+			my $is_wayland = (defined $ENV{XDG_SESSION_TYPE} && lc($ENV{XDG_SESSION_TYPE}) eq 'wayland') ? 1 : 0;
+			unless ($is_wayland) {
+				# On X11 the old hide+show trick helps to raise above others
+				$window->hide;
+			}
 
 			$window->show_all;
-			#$window->window->focus(Gtk3->get_current_event_time)
-			#	if defined $window->window;
-			$window->present;
+			# Try to present with the current event timestamp for better focus behavior
+			my $ts = 0;
+			eval { $ts = Gtk3::get_current_event_time(); 1 };
+			if ($ts && $window->can('present_with_time')) {
+				$window->present_with_time($ts);
+			} else {
+				$window->present;
+			}
+			# Ensure it is deiconified and visible to the user
+			$window->deiconify;
+			# As a fallback cue on strict focus policies, toggle urgency hint briefly
+			$window->set_urgency_hint(TRUE);
+			Glib::Timeout->add(1500, sub { $window->set_urgency_hint(FALSE); return FALSE; });
 
 			#set flag
 			$is_hidden = FALSE;
@@ -6285,14 +6317,32 @@ sub ACTIVATE {
 				# Default to preferring COSMIC and skipping portal on COSMIC sessions, unless forced
 				my $prefer_cosmic = ($ENV{SHUTTER_PREFER_COSMIC} && $ENV{SHUTTER_PREFER_COSMIC} =~ /^(1|true|yes)$/i) ? 1 : 0;
 				my $skip_portal   = ($ENV{SHUTTER_SKIP_PORTAL}   && $ENV{SHUTTER_SKIP_PORTAL}   =~ /^(1|true|yes)$/i) ? 1 : 0;
+				my $prefer_spectacle = 0; # from UI pref or KDE+Wayland default
 
 				# Apply saved UI preference if no env override
 				my $pref = eval { $settings_xml->{'general'}->{'wayland_backend_pref'} } // 'auto';
+				if ($pref eq 'auto') {
+					# Default to Spectacle on KDE + Wayland when available
+					my $is_kde = (
+						(defined $ENV{KDE_FULL_SESSION} && $ENV{KDE_FULL_SESSION} =~ /^(1|true)$/i) ||
+						(defined $ENV{XDG_CURRENT_DESKTOP} && $ENV{XDG_CURRENT_DESKTOP} =~ /(KDE|PLASMA)/i) ||
+						(defined $ENV{DESKTOP_SESSION} && $ENV{DESKTOP_SESSION} =~ /(plasma|kde)/i)
+					) ? 1 : 0;
+					eval { require Shutter::Screenshot::KDESpectacle; };
+					if ($is_kde && !$@ && Shutter::Screenshot::KDESpectacle::is_available()) {
+						$pref = 'spectacle';
+					}
+				}
 				unless ($ENV{SHUTTER_FORCE_PORTAL}) {
 					$force_portal = 1 if $pref eq 'portal';
 				}
 				unless ($ENV{SHUTTER_PREFER_COSMIC}) {
 					$prefer_cosmic = 1 if $pref eq 'cosmic';
+				}
+				$prefer_spectacle = 1 if $pref eq 'spectacle';
+				# If spectacle preferred, skip portal and try spectacle first when available
+				if ($prefer_spectacle) {
+					$skip_portal ||= 1;
 				}
 				if (!$prefer_cosmic || !$skip_portal) {
 					# If not explicitly set, enable defaults for COSMIC
@@ -6308,6 +6358,17 @@ sub ACTIVATE {
 					eval { require Shutter::Screenshot::COSMIC; };
 					if (!$@ && Shutter::Screenshot::COSMIC::is_available()) {
 						$screenshot = Shutter::Screenshot::COSMIC::full($screenshooter, {
+							include_cursor => $include_cursor,
+							delay => $delay_value,
+						});
+					}
+				}
+
+				# If Spectacle is preferred and available on KDE, try it before portal
+				if (!defined $screenshot && $prefer_spectacle) {
+					eval { require Shutter::Screenshot::KDESpectacle; };
+					if (!$@ && Shutter::Screenshot::KDESpectacle::is_available()) {
+						$screenshot = Shutter::Screenshot::KDESpectacle::full($screenshooter, {
 							include_cursor => $include_cursor,
 							delay => $delay_value,
 						});
@@ -6330,7 +6391,24 @@ sub ACTIVATE {
 						require Shutter::Screenshot::KDESpectacle;
 						require Shutter::Screenshot::COSMIC;
 						require Shutter::Screenshot::WLRGrim;
-						if (Shutter::Screenshot::GNOMEShell::is_available()) {
+						my $pref = eval { $settings_xml->{'general'}->{'wayland_backend_pref'} } // 'auto';
+						if ($pref eq 'auto') {
+							my $is_kde = (
+								(defined $ENV{KDE_FULL_SESSION} && $ENV{KDE_FULL_SESSION} =~ /^(1|true)$/i) ||
+								(defined $ENV{XDG_CURRENT_DESKTOP} && $ENV{XDG_CURRENT_DESKTOP} =~ /(KDE|PLASMA)/i) ||
+								(defined $ENV{DESKTOP_SESSION} && $ENV{DESKTOP_SESSION} =~ /(plasma|kde)/i)
+							) ? 1 : 0;
+							eval { require Shutter::Screenshot::KDESpectacle; };
+							if ($is_kde && !$@ && Shutter::Screenshot::KDESpectacle::is_available()) {
+								$pref = 'spectacle';
+							}
+						}
+						if ($pref eq 'spectacle' && Shutter::Screenshot::KDESpectacle::is_available()) {
+							$screenshot = Shutter::Screenshot::KDESpectacle::full($screenshooter, {
+								include_cursor => $include_cursor,
+								delay => $delay_value,
+							});
+						} elsif (Shutter::Screenshot::GNOMEShell::is_available()) {
 							$screenshot = Shutter::Screenshot::GNOMEShell::full($screenshooter, {
 								include_cursor => $include_cursor,
 								delay => $delay_value,
@@ -6395,7 +6473,14 @@ sub ACTIVATE {
 					} else {
 						require Shutter::Screenshot::GNOMEShell;
 						require Shutter::Screenshot::KDESpectacle;
-						if (Shutter::Screenshot::GNOMEShell::is_available()) {
+						# Check preference to prioritize Spectacle on KDE
+						my $pref = eval { $settings_xml->{'general'}->{'wayland_backend_pref'} } // 'auto';
+						if ($pref eq 'spectacle' && Shutter::Screenshot::KDESpectacle::is_available()) {
+							$screenshot = Shutter::Screenshot::KDESpectacle::window($screenshooter, {
+								include_cursor => $include_cursor,
+								delay => $delay_value,
+							});
+						} elsif (Shutter::Screenshot::GNOMEShell::is_available()) {
 							$screenshot = Shutter::Screenshot::GNOMEShell::window($screenshooter, {
 								include_cursor => $include_cursor,
 								delay => $delay_value,
@@ -6441,27 +6526,36 @@ sub ACTIVATE {
 					);
 					$screenshot = $screenshooter->select_advanced();
 				} else {
-					# Wayland: optional fast-path to COSMIC; else portal first
+					# Wayland: optional fast-path to COSMIC or Spectacle; then portal; then wlroots
 					my $force_portal  = $ENV{SHUTTER_FORCE_PORTAL} && $ENV{SHUTTER_FORCE_PORTAL} =~ /^(1|true|yes)$/i;
 					my $prefer_cosmic = ($ENV{SHUTTER_PREFER_COSMIC} && $ENV{SHUTTER_PREFER_COSMIC} =~ /^(1|true|yes)$/i) ? 1 : 0;
 					my $skip_portal   = ($ENV{SHUTTER_SKIP_PORTAL}   && $ENV{SHUTTER_SKIP_PORTAL}   =~ /^(1|true|yes)$/i) ? 1 : 0;
+					my $prefer_spectacle = 0;
 
 					# Apply saved UI preference if no env override
 					my $pref = eval { $settings_xml->{'general'}->{'wayland_backend_pref'} } // 'auto';
+					if ($pref eq 'auto') {
+						my $is_kde = (
+							(defined $ENV{KDE_FULL_SESSION} && $ENV{KDE_FULL_SESSION} =~ /^(1|true)$/i) ||
+							(defined $ENV{XDG_CURRENT_DESKTOP} && $ENV{XDG_CURRENT_DESKTOP} =~ /(KDE|PLASMA)/i) ||
+							(defined $ENV{DESKTOP_SESSION} && $ENV{DESKTOP_SESSION} =~ /(plasma|kde)/i)
+						) ? 1 : 0;
+						eval { require Shutter::Screenshot::KDESpectacle; };
+						if ($is_kde && !$@ && Shutter::Screenshot::KDESpectacle::is_available()) {
+							$pref = 'spectacle';
+						}
+					}
 					unless ($ENV{SHUTTER_FORCE_PORTAL}) {
 						$force_portal = 1 if $pref eq 'portal';
 					}
 					unless ($ENV{SHUTTER_PREFER_COSMIC}) {
 						$prefer_cosmic = 1 if $pref eq 'cosmic';
 					}
-					if (!$prefer_cosmic || !$skip_portal) {
-						eval { require Shutter::Screenshot::COSMIC; };
-						if (!$@ && Shutter::Screenshot::COSMIC::is_available()) {
-							$prefer_cosmic ||= 1;
-							$skip_portal   ||= 1;
-						}
-					}
-					if ($force_portal) { $prefer_cosmic = 0; $skip_portal = 0; }
+					$prefer_spectacle = 1 if $pref eq 'spectacle';
+					# If user prefers Spectacle, skip portal to allow Spectacle's region UI first
+					if ($prefer_spectacle) { $skip_portal ||= 1; }
+
+					# Try COSMIC selection if preferred/available
 					if ($prefer_cosmic) {
 						eval { require Shutter::Screenshot::COSMIC; };
 						if (!$@ && Shutter::Screenshot::COSMIC::is_available()) {
@@ -6472,8 +6566,19 @@ sub ACTIVATE {
 						}
 					}
 
+					# Try Spectacle selection first if user prefers it and it's available
+					if (!defined $screenshot && $prefer_spectacle) {
+						eval { require Shutter::Screenshot::KDESpectacle; };
+						if (!$@ && Shutter::Screenshot::KDESpectacle::is_available()) {
+							$screenshot = Shutter::Screenshot::KDESpectacle::selection($screenshooter, {
+								include_cursor => $include_cursor,
+								delay => $delay_value,
+							});
+						}
+					}
+
+					# Portal interactive selection unless skipped
 					if (!defined $screenshot && !$skip_portal) {
-						# Let portal drive interactive region selection first
 						$screenshot = Shutter::Screenshot::Wayland::xdg_portal($screenshooter, {
 							interactive => 1,
 							include_cursor => $include_cursor,
@@ -6481,13 +6586,20 @@ sub ACTIVATE {
 						});
 					}
 
-					# Fallback chain if portal failed or was skipped
+					# Fallbacks: COSMIC, Spectacle, WLR grim+slurp (if not tried)
 					if (!defined $screenshot || ref($screenshot) eq '' ) {
 						eval {
 							require Shutter::Screenshot::COSMIC;
 							require Shutter::Screenshot::WLRGrim;
+							require Shutter::Screenshot::KDESpectacle;
 							if (Shutter::Screenshot::COSMIC::is_available()) {
 								$screenshot = Shutter::Screenshot::COSMIC::selection($screenshooter, {
+									include_cursor => $include_cursor,
+									delay => $delay_value,
+								});
+							} elsif (Shutter::Screenshot::KDESpectacle::is_available()) {
+								# Prefer Spectacle on KDE when available
+								$screenshot = Shutter::Screenshot::KDESpectacle::selection($screenshooter, {
 									include_cursor => $include_cursor,
 									delay => $delay_value,
 								});
@@ -6496,6 +6608,9 @@ sub ACTIVATE {
 									include_cursor => $include_cursor,
 									delay => $delay_value,
 								});
+							} else {
+								# no backend produced a result
+								$screenshot = undef;
 							}
 						};
 					}
@@ -6737,9 +6852,15 @@ sub ACTIVATE {
 		# $screenshot is undefined if the selection width or height is zero
 		# Actually this should be handled by Shutter::Screenshot::Error but fails for an area with zero width or height for some reason
 		unless ($screenshot) {
-			my $response = $sd->dlg_error_message($d->get("Error: selection width or height is zero, please retry!"), $d->get("Failed"));
-			fct_control_main_window('show');
-			return FALSE;
+			# Wayland path: if no backend returned anything, treat as user-cancel (code 5)
+			# to avoid the misleading zero-size selection error dialog.
+			if (!$x11_supported) {
+				$screenshot = 5; # user-cancel; will be handled by Shutter::Screenshot::Error below
+			} else {
+				my $response = $sd->dlg_error_message($d->get("Error: selection width or height is zero, please retry!"), $d->get("Failed"));
+				fct_control_main_window('show');
+				return FALSE;
+			}
 		}
 
 		my $giofile = undef;
