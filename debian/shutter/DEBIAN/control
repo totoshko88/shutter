@@ -1,0 +1,14 @@
+Package: shutter
+Version: 0.99.7-1
+Architecture: all
+Maintainer: Shutter Project Maintainers <shutter-project@users.noreply.github.com>
+Installed-Size: 11124
+Depends: perl:any, libglib-object-introspection-perl, gir1.2-gtk-3.0, gir1.2-wnck-3.0, libnet-dbus-perl, libgtk3-imageview-perl | libgtk2-imageview-perl, libnumber-bytes-human-perl, libxml-simple-perl, libhttp-message-perl, libdigest-md5-perl, libsort-naturally-perl, libimage-magick-perl, liblocale-gettext-perl, libproc-processtable-perl | procps, libfile-which-perl, libfile-copy-recursive-perl, libmoo-perl (>= 2.0), libgoocanvas2-perl, xdg-desktop-portal, xdg-desktop-portal-gtk | xdg-desktop-portal-gnome | xdg-desktop-portal-kde
+Recommends: libimage-exiftool-perl, spectacle, cosmic-screenshot
+Section: graphics
+Priority: optional
+Homepage: https://shutter-project.org/
+Description: Feature-rich screenshot tool
+ Shutter is an advanced screenshot tool.
+ It can capture fullscreen, window, section and websites.
+ It supports editing, annotations, and uploading.

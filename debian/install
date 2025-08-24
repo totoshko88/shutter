@@ -1,0 +1,9 @@
+bin/shutter usr/bin/
+share/applications/shutter.desktop usr/share/applications/
+share/icons usr/share/
+share/pixmaps usr/share/
+share/man/man1/shutter.1 usr/share/man/man1/
+share/metainfo/shutter.metainfo.xml usr/share/metainfo/
+share/shutter usr/share/
+COPYING usr/share/doc/shutter/
+README usr/share/doc/shutter/

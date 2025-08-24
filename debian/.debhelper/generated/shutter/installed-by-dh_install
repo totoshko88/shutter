@@ -1,0 +1,9 @@
+./bin/shutter
+./share/applications/shutter.desktop
+./share/icons
+./share/pixmaps
+./share/man/man1/shutter.1
+./share/metainfo/shutter.metainfo.xml
+./share/shutter
+./COPYING
+./README

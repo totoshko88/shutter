@@ -1,10 +1,12 @@
 requires "Gtk3";
 requires "Pango";
 requires "Glib";
+requires "Glib::Object::Introspection";
 requires "Gtk3::ImageView";
 requires "Number::Bytes::Human";
 requires "XML::Simple";
 requires "Net::DBus";
+requires "Net::DBus::GLib";
 requires "HTTP::Status";
 requires "Digest::MD5";
 requires "Proc::Simple";

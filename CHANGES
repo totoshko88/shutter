@@ -1,3 +1,26 @@
+shutter (0.99.7)
+
+New features:
+
+* Modern Wayland-first implementation with multiple backends:
+   - XDG Desktop Portal: fullscreen and interactive selection
+   - GNOME Shell: window/full via org.gnome.Shell.Screenshot
+   - KDE Plasma: window/full via Spectacle (if installed)
+   - wlroots: fullscreen/selection via grim + slurp (if installed)
+   - COSMIC (Pop!_OS): fullscreen/selection via cosmic-screenshot (preferred on COSMIC sessions)
+* New Preferences option: select Wayland backend behavior (Auto / Prefer COSMIC / Force Portal)
+* Environment toggles for fine-grained control:
+   - SHUTTER_SKIP_PORTAL, SHUTTER_PREFER_COSMIC, SHUTTER_FORCE_PORTAL
+   - SHUTTER_PORTAL_TIMEOUT_MS, SHUTTER_PORTAL_MINIMAL
+
+Bug fixes and polish:
+
+* Guarded X11-only calls on Wayland to avoid runtime exceptions (pointer queries etc.)
+* Silenced Gtk-CRITICAL warning for drag icon when no drag site is present
+* Improved debug logging and timeout handling for portal calls
+* Debian packaging refreshed (debhelper-compat 13) with Recommends for Spectacle and cosmic-screenshot
+
+
 shutter (0.99.6)
 
 

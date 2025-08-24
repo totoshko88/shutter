@@ -6,92 +6,82 @@ https://shutter-project.org/
 
 Installation
 ------------
-https://shutter-project.org/downloads/
+Shutter — Modernized Fork (Wayland/GI Ready)
+--------------------------------------------
 
-Contact
-------------
-Via E-Mail : https://shutter-project.org/contact/
-Via GitHub : https://github.com/shutter-project/shutter/issues/new/choose
-Via IRC    : ircs://irc.libera.chat:6697/#shutter
+This is a modernization fork of Shutter focused on working out-of-the-box on modern Linux systems (Ubuntu/Pop!_OS 24.04+, Wayland, updated Perl toolchain).
 
-Found a bug?
-------------
-https://github.com/shutter-project/shutter/issues/new?labels=bug&template=bug_report.md
+Project page: https://github.com/totoshko88/shutter
 
-Shutter Licence
-------------
-Licence: GPL 3 or (at your option) any later version.
+Why this fork?
+--------------
+- Wayland-first screenshots via xdg-desktop-portal (fullscreen + interactive region)
+- No hard dependency on libgtk-3-perl: GI fallback enables running with libglib-object-introspection-perl + GIRs
+- Updated dependencies aligned with current repository availability
+- Debian packaging included for quick installation
 
-Shutter is free software; you can redistribute it and/or modify it
-under the terms of the GNU General Public Licence as published
-by the Free Software Foundation; either version 3 of the Licence,
-or (at your option) any later version.
+Quick installation (Debian/Ubuntu)
+----------------------------------
+1) Build the .deb:
+	dpkg-buildpackage -us -uc -b
+2) Install (resolves dependencies automatically):
+	sudo apt install ../shutter_0.99.7-1_all.deb
+	# або
+	sudo dpkg -i ../shutter_0.99.7-1_all.deb || sudo apt -f install
 
-Shutter is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+From source
+-----------
+git clone https://github.com/totoshko88/shutter
+cd shutter
+./bin/shutter
 
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+Wayland support
+---------------
+Shutter використовує xdg-desktop-portal на Wayland для знімків екрана:
+- Full desktop: через портал (без взаємодії)
+- Selection: через портал (інтерактивний UI)
 
-Cursors License
-------------
-Licence: GPL2 or (at your option) any later version.
+Window capture on Wayland:
+- GNOME: підтримується через D-Bus API org.gnome.Shell.Screenshot (автовиявлення)
+- KDE Plasma: підтримується, якщо встановлено Spectacle (виклик через `spectacle --window`)
+ - COSMIC (Pop!_OS): повноекранний та виділення підтримуються через `cosmic-screenshot` як резерв до порталу
 
-Some cursors (share/shutter/resources/icons/drawing_tool/cursor) 
-are based on/taken from the inkscape project
-http://inkscape.sourceforge.net/
+Потрібно встановити один з бекендів порталу: xdg-desktop-portal-gtk | xdg-desktop-portal-gnome | xdg-desktop-portal-kde.
 
-Gnome Icons
-------------
-Licence: GPL2 or (at your option) any later version.
+Troubleshooting and debug
+-------------------------
+Увімкнути логіку налагодження:
+	SHUTTER_DEBUG=1
 
-Tango Icons
-------------
-In the preparation of the 0.8.90 release Novell took care of tracking
-down all the contributors to get them to relicense their artwork
-into Public Domain.
+Налаштування порталу (необов’язково):
+- SHUTTER_PORTAL_TIMEOUT_MS=30000   # таймаут неінтерактивних запитів
+- SHUTTER_PORTAL_MINIMAL=1          # мінімальні опції порталу для сумісності
+- SHUTTER_SKIP_PORTAL=1            # пропустити xdg-портал і одразу перейти до резервних бекендів
+- SHUTTER_PREFER_COSMIC=1          # на COSMIC спершу пробувати cosmic-screenshot
+- SHUTTER_FORCE_PORTAL=1           # на COSMIC примусово використовувати портал (ігнорувати fast-path)
 
-The COPYING file of the tarball states the following:
-| The icons in this repository are herefore released into the Public Domain.
+Примітка COSMIC: за замовчуванням на сеансі COSMIC Shutter віддає перевагу бекенду
+cosmic-screenshot і пропускає xdg-портал (через відомі тайм-аути), якщо не задано
+SHUTTER_FORCE_PORTAL=1.
 
-Additionally the copyright status of the files was tracked in the CVS and the
-rdf properties of the SVGs adjusted for all files that were put into Public
-Domain (see rdf:about and rdf:resource).  Both fields contain a link to the
-Creative Commons Public Domain Dediciation[0] as reproduced below:
-| Public Domain Dedication
-|
-| Copyright-Only Dedication (based on United States law) or Public Domain
-| Certification
-|
-| The person or persons who have associated work with this document (the
-| "Dedicator" or "Certifier") hereby either (a) certifies that, to the best
-| of his knowledge, the work of authorship identified is in the public
-| domain of the country from which the work is published, or (b)
-| hereby dedicates whatever copyright the dedicators holds in the work
-| of authorship identified below (the "Work") to the public domain. A
-| certifier, moreover, dedicates any copyright interest he may have in
-| the associated work, and for these purposes, is described as a
-| "dedicator" below.
-|
-| A certifier has taken reasonable steps to verify the copyright
-| status of this work. Certifier recognizes that his good faith efforts
-| may not shield him from liability if in fact the work certified is not
-| in the public domain.
-|
-| Dedicator makes this dedication for the benefit of the public at
-| large and to the detriment of the Dedicator's heirs and successors.
-| Dedicator intends this dedication to be an overt act of relinquishment
-| in perpetuity of all present and future rights under copyright law,
-| whether vested or contingent, in the Work. Dedicator understands that
-| such relinquishment of all rights includes the relinquishment of all
-| rights to enforce (by lawsuit or otherwise) those copyrights in the
-| Work.
-|
-| Dedicator recognizes that, once placed in the public domain, the Work
-| may be freely reproduced, distributed, transmitted, used, modified,
-| built upon, or otherwise exploited by anyone for any purpose, commercial
-| or non-commercial, and in any way, including by methods that have not
+Налаштування з UI (Параметри → Wayland):
+- Auto: використовувати портал, потім резервні бекенди (GNOME/KDE/wlroots/COSMIC)
+- Prefer COSMIC: на Wayland віддавати перевагу `cosmic-screenshot` (якщо доступний)
+- Force Portal: завжди використовувати xdg-desktop-portal (навіть на COSMIC)
+
+Відомі попередження (безпечні до ігнорування):
+- Gtk/Pango/GLib warnings під час запуску (Gtk-CRITICAL, g_boxed_type_register_static)
+- «Variable $self will not stay shared» у SelectorAdvanced.pm
+
+Tested on
+---------
+- Ubuntu/Pop!_OS 24.04 (Wayland) GNOME Shell
+- KDE Plasma 6 (Wayland) з встановленим Spectacle
+ - Pop!_OS COSMIC (Wayland) з встановленим cosmic-screenshot
+- Perl 5.3x/5.4x, GI + GIR (Gtk 3.0, Wnck 3.0)
+
+License
+-------
+GPL-3.0-or-later. Див. файл COPYING.
 | yet been invented or conceived.
 [0] http://creativecommons.org/licenses/publicdomain/
