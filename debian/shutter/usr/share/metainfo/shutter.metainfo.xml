@@ -24,6 +24,22 @@
   <url type="homepage">https://shutter-project.org/</url>
   <url type="bugtracker">https://github.com/shutter-project/shutter/issues</url>
   <url type="contact">https://shutter-project.org/contact/</url>
+  <releases>
+    <release version="0.99.7" date="2025-08-24">
+      <description>
+        <p>Modernized Wayland-first release with multiple backends and a new UI preference.</p>
+        <ul>
+          <li>Wayland via XDG Desktop Portal (fullscreen + interactive selection)</li>
+          <li>GNOME Shell (org.gnome.Shell.Screenshot) for window/full</li>
+          <li>KDE Spectacle for window/full (if installed)</li>
+          <li>wlroots fallback via grim+slurp (if installed)</li>
+          <li>COSMIC backend via cosmic-screenshot; preferred on COSMIC sessions</li>
+          <li>Preferences → Wayland: choose Auto / Prefer COSMIC / Force Portal</li>
+          <li>Packaging refreshed (debhelper-compat 13). Docs updated.</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
   <screenshots>
     <screenshot type="default">
       <image>https://shutter-project.org/wp-content/uploads/key_feature_030.png</image>

@@ -1,8 +1,8 @@
 87279c8e233e4bc45e98d089e5949cda  usr/bin/shutter
 643f3c8b28c3505fcbeeb861cc0f5c73  usr/share/applications/shutter.desktop
 8d2de7badae35d3c7140c82fa5d25649  usr/share/doc/shutter/COPYING.gz
-01c4c7895da11e4b074b1932aea44e2d  usr/share/doc/shutter/README
-e3939bb4b32cff019747f9ab62e8addf  usr/share/doc/shutter/changelog.Debian.gz
+2c980113eaaeee8cb7bb4706ed88218e  usr/share/doc/shutter/README.gz
+1e2164c020093ace0b89e2d57a2c6f9f  usr/share/doc/shutter/changelog.Debian.gz
 763900957b9d57fe7f91898a46ea7e30  usr/share/icons/HighContrast/scalable/apps/shutter.svg
 40b03fa671348f2cd522a67ef43b8afc  usr/share/icons/hicolor/128x128/apps/shutter.png
 da64afb0977b5eb29b56f591fd69c9cb  usr/share/icons/hicolor/16x16/apps/shutter.png
@@ -207,10 +207,10 @@ f2240090e1a6d1b1acc452fe4d22692d  usr/share/locale/zh_TW/LC_MESSAGES/shutter-plu
 f31c0b76090d00c449eb289f1e3f6c5f  usr/share/locale/zh_TW/LC_MESSAGES/shutter-upload-plugins.mo
 96842a63d0836c0b069c3ecc4413370c  usr/share/locale/zh_TW/LC_MESSAGES/shutter.mo
 fe2f49ec0af591f75e8e25ee6e0ac8b7  usr/share/man/man1/shutter.1.gz
-226b078ecc711f5f22fb2408e9153141  usr/share/metainfo/shutter.metainfo.xml
+d843e430075b4045639e0974fe7ff22b  usr/share/metainfo/shutter.metainfo.xml
 755ee26c4c5a982c4494aa7ebd2494aa  usr/share/shutter/resources/conf/shape.conf
 710f65da0fb6d0b0c54a1cffa263b851  usr/share/shutter/resources/credits/art
-36a85c3f281b559927d8cd9a628175e2  usr/share/shutter/resources/credits/dev
+d21b8e03423ebfb2789af496af6fbae0  usr/share/shutter/resources/credits/dev
 41faf6903472f821be927170fb293d05  usr/share/shutter/resources/gui/checkers.svg
 192f8b199c1b11f70780feeddbf12333  usr/share/shutter/resources/gui/stipple.png
 43f6f398fceadbf7fe3be2bdd4b870db  usr/share/shutter/resources/icons/desktop.svg
@@ -319,8 +319,8 @@ cb4259662c0d91b9f38656d8614f2f11  usr/share/shutter/resources/icons/shutter_curs
 3f5c5f4f887a30b1d1bfed9e4cd4e19e  usr/share/shutter/resources/icons/throbber_16x16.gif
 89acc860762e7635cbe8bdaa7e54fae1  usr/share/shutter/resources/icons/web_image.svg
 879d732bf9a3bb0e1e58c2d985ad4f95  usr/share/shutter/resources/license/gplv3
-822fac0563c8365d12a40f84dc02bde7  usr/share/shutter/resources/license/gplv3_hint
-4d1d2830e8026a254f7d74b6bcfbce81  usr/share/shutter/resources/modules/Shutter/App/AboutDialog.pm
+9494228ff3fe5fef257df22eea4e8a87  usr/share/shutter/resources/license/gplv3_hint
+fed3f3a1c335f66b019cf18f9975ced8  usr/share/shutter/resources/modules/Shutter/App/AboutDialog.pm
 1056dd0c620ed8c4f0ddacb2e0e273a6  usr/share/shutter/resources/modules/Shutter/App/Autostart.pm
 5787d303e5fce769ce0668a4cf61bf46  usr/share/shutter/resources/modules/Shutter/App/Common.pm
 35d2840db997ed0d3fd8915f11de3aa5  usr/share/shutter/resources/modules/Shutter/App/Directories.pm

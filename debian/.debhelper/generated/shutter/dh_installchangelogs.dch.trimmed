@@ -1,11 +1,15 @@
 shutter (0.99.7-1) unstable; urgency=medium
 
   * Modernized fork for Wayland-first systems
-    - Wayland support via xdg-desktop-portal (fullscreen + interactive region)
-  - Wayland window capture on GNOME via org.gnome.Shell.Screenshot
-  - Wayland window capture on KDE Plasma via Spectacle if present
-    - GTK3 Perl hard dep removed; GI fallback enabled (libglib-object-introspection-perl + GIR)
-    - Dependencies refreshed for current Debian/Ubuntu repos
-    - Debian packaging added and polished (debhelper-compat 13)
+    - Wayland via XDG Desktop Portal (fullscreen + interactive selection)
+    - GNOME Shell Wayland (org.gnome.Shell.Screenshot) for window/full
+    - KDE Plasma via Spectacle for window/full (if installed)
+    - wlroots fallback via grim+slurp for fullscreen/selection (if installed)
+    - COSMIC backend via cosmic-screenshot (preferred on COSMIC sessions)
+  * New Preferences setting: Wayland backend (Auto / Prefer COSMIC / Force Portal)
+  * Env toggles: SHUTTER_SKIP_PORTAL, SHUTTER_PREFER_COSMIC, SHUTTER_FORCE_PORTAL,
+    SHUTTER_PORTAL_TIMEOUT_MS, SHUTTER_PORTAL_MINIMAL
+  * Guard X11-only calls on Wayland; silence Gtk-CRITICAL drag icon warning
+  * Packaging: debhelper-compat 13; Recommends: spectacle, cosmic-screenshot
 
  -- Shutter Project Maintainers <shutter-project@users.noreply.github.com>  Sat, 24 Aug 2025 01:40:00 +0000

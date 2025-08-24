@@ -96,7 +96,7 @@ sub show {
 	$about->set_version($self->{_sc}->get_version);
 
 	#~ $about->set_website_label("Shutter-Website");
-	$about->set_website("https://shutter-project.org");
+	$about->set_website("https://github.com/totoshko88/shutter");
 	$about->set_authors(\@all_dev);
 	$about->set_artists(\@all_art);
 	$about->set_translator_credits($d->get("translator-credits"));
