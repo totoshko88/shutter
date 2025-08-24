@@ -6,10 +6,11 @@ shutter (0.99.7-1) unstable; urgency=medium
     - KDE Plasma via Spectacle for window/full (if installed)
     - wlroots fallback via grim+slurp for fullscreen/selection (if installed)
     - COSMIC backend via cosmic-screenshot (preferred on COSMIC sessions)
-  * New Preferences setting: Wayland backend (Auto / Prefer COSMIC / Force Portal)
+    - GNOME Screenshot CLI backend (fullscreen/selection/window) on GNOME
+  * New Preferences setting: Wayland backend (Auto / Prefer Spectacle / Prefer GNOME Screenshot / Prefer COSMIC / Force Portal)
   * Env toggles: SHUTTER_SKIP_PORTAL, SHUTTER_PREFER_COSMIC, SHUTTER_FORCE_PORTAL,
     SHUTTER_PORTAL_TIMEOUT_MS, SHUTTER_PORTAL_MINIMAL
   * Guard X11-only calls on Wayland; silence Gtk-CRITICAL drag icon warning
-  * Packaging: debhelper-compat 13; Recommends: spectacle, cosmic-screenshot
+  * Packaging: debhelper-compat 13; Recommends: spectacle, cosmic-screenshot, gnome-screenshot, grim, slurp
 
  -- Shutter Project Maintainers <shutter-project@users.noreply.github.com>  Sat, 24 Aug 2025 01:40:00 +0000

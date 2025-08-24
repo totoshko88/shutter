@@ -42,9 +42,9 @@ Shutter використовує xdg-desktop-portal на Wayland для знім
 - Selection: через портал (інтерактивний UI)
 
 Window capture on Wayland:
-- GNOME: підтримується через D-Bus API org.gnome.Shell.Screenshot (автовиявлення)
+- GNOME: підтримується через D-Bus API org.gnome.Shell.Screenshot (автовиявлення) та CLI `gnome-screenshot`
 - KDE Plasma: підтримується, якщо встановлено Spectacle (виклик через `spectacle --window`)
- - COSMIC (Pop!_OS): повноекранний та виділення підтримуються через `cosmic-screenshot` як резерв до порталу
+- COSMIC (Pop!_OS): повноекранний та виділення підтримуються через `cosmic-screenshot` як резерв до порталу
 
 Потрібно встановити один з бекендів порталу: xdg-desktop-portal-gtk | xdg-desktop-portal-gnome | xdg-desktop-portal-kde.
 
@@ -66,6 +66,8 @@ SHUTTER_FORCE_PORTAL=1.
 
 Налаштування з UI (Параметри → Wayland):
 - Auto: використовувати портал, потім резервні бекенди (GNOME/KDE/wlroots/COSMIC)
+- Prefer Spectacle (KDE): віддавати перевагу Spectacle на KDE
+- Prefer GNOME Screenshot: віддавати перевагу `gnome-screenshot` на GNOME
 - Prefer COSMIC: на Wayland віддавати перевагу `cosmic-screenshot` (якщо доступний)
 - Force Portal: завжди використовувати xdg-desktop-portal (навіть на COSMIC)
 
@@ -77,7 +79,8 @@ Tested on
 ---------
 - Ubuntu/Pop!_OS 24.04 (Wayland) GNOME Shell
 - KDE Plasma 6 (Wayland) з встановленим Spectacle
- - Pop!_OS COSMIC (Wayland) з встановленим cosmic-screenshot
+- Pop!_OS COSMIC (Wayland) з встановленим cosmic-screenshot
+- GNOME 45+ (Wayland) з встановленим gnome-screenshot
 - Perl 5.3x/5.4x, GI + GIR (Gtk 3.0, Wnck 3.0)
 
 License

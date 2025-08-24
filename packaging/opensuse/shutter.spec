@@ -41,7 +41,7 @@ Suggests:       perl(Net::DBus::GLib)
 Suggests:       perl(GooCanvas2)
 Recommends:     grim
 Recommends:     slurp
-Recommends:     spectacle
+Recommends:     spectacle, gnome-screenshot, grim, slurp, cosmic-screenshot
 Recommends:     cosmic-screenshot
 
 %description

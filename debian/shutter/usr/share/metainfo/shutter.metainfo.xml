@@ -30,11 +30,11 @@
         <p>Modernized Wayland-first release with multiple backends and a new UI preference.</p>
         <ul>
           <li>Wayland via XDG Desktop Portal (fullscreen + interactive selection)</li>
-          <li>GNOME Shell (org.gnome.Shell.Screenshot) for window/full</li>
+          <li>GNOME Shell (org.gnome.Shell.Screenshot) for window/full; GNOME Screenshot CLI as an alternative</li>
           <li>KDE Spectacle for window/full (if installed)</li>
           <li>wlroots fallback via grim+slurp (if installed)</li>
           <li>COSMIC backend via cosmic-screenshot; preferred on COSMIC sessions</li>
-          <li>Preferences → Wayland: choose Auto / Prefer COSMIC / Force Portal</li>
+          <li>Preferences → Wayland: choose Auto / Prefer Spectacle / Prefer GNOME Screenshot / Prefer COSMIC / Force Portal</li>
           <li>Packaging refreshed (debhelper-compat 13). Docs updated.</li>
         </ul>
       </description>

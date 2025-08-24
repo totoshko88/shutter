@@ -5,7 +5,9 @@ Maintainer: Shutter Project Maintainers <shutter-project@users.noreply.github.co
 Build-Depends: debhelper-compat (= 13),
                perl,
                gettext,
-               po-debconf
+               po-debconf,
+               libtest-strict-perl,
+               libtest-mockmodule-perl
 Standards-Version: 4.7.0
 Homepage: https://shutter-project.org/
 Rules-Requires-Root: no
@@ -32,7 +34,7 @@ Depends: ${misc:Depends}, ${perl:Depends},
          libgoocanvas2-perl,
          xdg-desktop-portal,
          xdg-desktop-portal-gtk | xdg-desktop-portal-gnome | xdg-desktop-portal-kde
-Recommends: libimage-exiftool-perl, spectacle, cosmic-screenshot
+Recommends: libimage-exiftool-perl, spectacle, cosmic-screenshot, gnome-screenshot, grim, slurp
 Description: Feature-rich screenshot tool
  Shutter is an advanced screenshot tool.
  It can capture fullscreen, window, section and websites.
