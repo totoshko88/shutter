@@ -22,14 +22,37 @@ https://builder.aws.com/content/31jnWDP97xYZ1xSWDhopgDW1tcg/shutter-screenshot-t
 
 ---
 ## 🧩 Backends (auto-detected)
-- Portal: fullscreen + interactive selection
+- Portal (xdg-desktop-portal): fullscreen + interactive selection
 - GNOME Shell (org.gnome.Shell.Screenshot): window/full
+- GNOME Screenshot (CLI): fullscreen/selection/window
 - KDE Spectacle: selection/window/full
 - wlroots: grim + slurp (fullscreen/selection)
 - COSMIC: cosmic-screenshot (preferred on COSMIC sessions)
 
 ---
 ## 🚀 Install
+
+### Debian/Ubuntu (.deb)
+Build a local .deb and install it (Wayland-ready):
+
+```bash
+# Install minimal build tooling and test deps
+sudo apt update
+sudo apt install -y build-essential devscripts debhelper po-debconf gettext \
+	libtest-strict-perl libtest-mockmodule-perl
+
+# Build the .deb
+dpkg-buildpackage -us -uc -b
+
+# Install the package (resolves runtime Depends automatically)
+sudo apt install ../shutter_*_all.deb
+
+# Optional: install recommended backends for full feature coverage
+sudo apt install -y spectacle cosmic-screenshot gnome-screenshot grim slurp
+```
+
+On Wayland, also ensure a portal backend is present (one of):
+- xdg-desktop-portal-gtk • xdg-desktop-portal-gnome • xdg-desktop-portal-kde
 
 ### openSUSE RPM
 Build locally from the included spec:
